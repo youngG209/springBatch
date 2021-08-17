@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommonMapper">
+
+    <resultMap id="batchInfo" type="com.springbatch.dto.common.BatchInfo">
+		<result column="INSTANCE_ID" property="jobInstanceId"/>
+		<result column="CHECK_DATA_TIME" property="checkDataTime"/>
+		<result column="USE_YN" property="useYn"/>
+   	</resultMap>
+
+	<insert id="mergeBatchInfo" parameterType="com.springbatch.dto.common.BatchInfo">
+
+	</insert>
+
+</mapper>

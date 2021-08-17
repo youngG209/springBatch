@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CompanyMapper">
+    <resultMap id="companyResult" type="com.springbatch.dto.NTS.Company">
+        <result column="ROW_NUM" property="rowNum"/>
+        <result column="ID" property="id"/>
+        <result column="TYPE" property="type"/>
+        <result column="SUB_TYPE" property="subType"/>
+        <result column="SUB_TYPE_DESC" property="subTypeDesc"/>
+        <result column="BUSI_TYPE" property="busiType"/>
+        <result column="RECEIPT_TYPE" property="receiptType"/>
+        <result column="REPRESENT_NAME" property="representName"/>
+        <result column="MUSEUM_GALLERY" property="museumGallery"/>
+        <result column="ZIP_CODE" property="zipCode"/>
+        <result column="ADDR_MAIN" property="addrMain"/>
+        <result column="ADDR_DETAIL" property="addrDetail"/>
+        <result column="ADDR" property="addr"/>
+        <result column="GPS_X" property="gpsX"/>
+        <result column="GPS_Y" property="gpsY"/>
+        <result column="REGIST_NUM" property="registNum"/>
+        <result column="NAME" property="name"/>
+        <result column="TEMP_PWD" property="tempPwd"/>
+        <result column="COMPANY_REG_DATE" property="companyRegDate"/>
+        <result column="START_DATE" property="startDate"/>
+        <result column="END_DATE" property="endDate"/>
+        <result column="STATE" property="state"/>
+        <result column="STATE_DESC" property="stateDesc"/>
+        <result column="MANAGE_NO" property="manageNo"/>
+        <result column="USE_YN" property="useYn"/>
+        <result column="PRIVATE_YN" property="privateYn"/>
+        <result column="PRIVATE_AGREE_YN" property="privateAgreeYn"/>
+        <result column="AUTH_CODE" property="authCode"/>
+        <result column="CONTENTS" property="contents"/>
+        <result column="MANAGER_NAME" property="managerName"/>
+        <result column="MANAGER_EMAIL" property="managerEmail"/>
+        <result column="MANAGER_TEL" property="managerTel"/>
+        <result column="MANAGER_HP" property="managerHp"/>
+        <result column="TEMP_ID" property="tempId"/>
+        <result column="UNIQUE_NUMBER" property="uniqueNumber"/>
+        <result column="ADMIN_UPDATE_DATE" property="adminUpdateDate"/>
+
+        <result column="OFFLINE_YN" property="offlineYn"/>
+        <result column="ONLINE_YN" property="onlineYn"/>
+        <result column="OFFLINE_ALL_YN" property="offlineAllYn"/>
+        <result column="OFFLINE_ENTER_YN" property="offlineEnterYn"/>
+        <result column="ONLINE_SALE_YN" property="onlineSaleYn"/>
+        <result column="ONLINE_COMMISSION_YN" property="onlineCommissionYn"/>
+        <result column="ONLINE_ENTER_YN" property="onlineEnterYn"/>
+        <result column="RECEIPT_BOOK_YN" property="receiptBookYn"/>
+        <result column="RECEIPT_CONCERT_YN" property="receiptConcertYn"/>
+        <result column="RECEIPT_MUSEUM_YN" property="receiptMuseumYn"/>
+        <result column="RECEIPT_GALLERY_YN" property="receiptGalleryYn"/>
+        <result column="RECEIPT_NEWSPAPER_YN" property="receiptNewsPaperYn"/>
+        <result column="RECEIPT_DEDUCTION_ETC_YN" property="receiptDeductionEtcYn"/>
+        <result column="RECEIPT_DEDUCTION_ETC_YN_ORG" property="receiptDeductionEtcYnOrg"/>
+        <result column="YEAR_TAX_AMT" property="yearTaxAmt"/>
+        <result column="STORE_NAME" property="storeName"/>
+        <result column="PCC_NAME" property="pccName"/>
+        <result column="NUM" property="num"/>
+        <result column="MOD_CODE" property="modCode"/>
+        <result column="SIDO" property="sido"/>
+    </resultMap>
+
+    <resultMap id="companyChangeGubun" type="com.springbatch.dto.NTS.CompanyChangeGubun">
+   		<result column="COMPANY_ID" property="companyId"/>
+   		<result column="TYPE" property="changeGubun"/>
+   		<result column="REGIST_NUM" property="registNum"/>
+   		<result column="START_DATE" property="afStartYmd"/>
+   		<result column="END_DATE" property="afEndYmd"/>
+   		<result column="BF_START_DATE" property="bfStartYmd"/>
+   		<result column="BF_END_DATE" property="bfEndYmd"/>
+   		<result column="MOD_CODE" property="modCode"/>
+   	</resultMap>
+
+    <select id="batchNTSExcelListForCard" resultMap="companyResult">
+   		WITH store_list AS (
+   		    SELECT
+   		        wa.company_id,
+   		        wa.store_id,
+   		        wa.store_type    AS type,
+   		        wa.pcc_group_cd,
+   		        wa.pcc_cd,
+   		        wb.common_name
+   		        || (
+   		            CASE
+   		                WHEN wa.store_type = 'SALE_REPRESENT_PG'     THEN
+   		                    '(대표)'
+   		                WHEN wa.store_type = 'SALE_INDIVIDUAL_PG'    THEN
+   		                    '(개별)'
+   		                ELSE
+   		                    ''
+   		            END
+   		        )                AS pcc_name,
+   		        wa.store_num     AS num,
+   		        wa.start_ymd     AS start_date,
+   		        wa.end_ymd       AS end_date
+   		    FROM
+   		        company_store  wa,
+   		        common_cd      wb,
+   		        company_sub    wc
+   		    WHERE
+   		            wa.pcc_cd = wb.common_cd (+)
+   		        AND wa.company_id = wc.company_id
+   		        AND wa.use_yn = 'Y'
+   		        AND wa.store_type IN ( 'SALE_OFFLINE_CARD', 'SALE_REPRESENT_PG', 'SALE_INDIVIDUAL_PG', 'SALE_DIRECT_CARD', 'SALE_CARD',
+   		                               'PG_CARD',
+   		                               'ENTER_CASH', 'SALE_OFFLINE_PG'  )
+   		        AND
+   		        CASE
+   		            WHEN wc.offline_yn = 'Y'
+   		                 AND ( wc.online_sale_yn != 'Y'
+   		                       AND wc.online_commission_yn != 'Y' ) THEN
+   		                    wa.store_type
+   		            ELSE
+   		                'SALE_OFFLINE_CARD'
+   		        END
+   		        IN ( 'SALE_OFFLINE_CARD',
+   		             'SALE_CARD', 'SALE_OFFLINE_PG'  )
+   		        AND
+   		        CASE
+   		            WHEN wc.offline_yn != 'Y'
+   		                 AND ( wc.online_sale_yn = 'Y'
+   		                       OR wc.online_commission_yn = 'Y' ) THEN
+   		                    wa.store_type
+   		            ELSE
+   		                'SALE_DIRECT_CARD'
+   		        END
+   		        IN ( 'SALE_DIRECT_CARD',
+   		             'SALE_REPRESENT_PG',
+   		             'SALE_INDIVIDUAL_PG',
+   		             'SALE_CARD' )
+   		        AND CASE
+   		                WHEN wa.store_type = 'ENTER_CASH' THEN
+   		                    ROWNUM
+   		                ELSE
+   		                    1
+   		            END = 1
+   		)
+		SELECT *
+		FROM
+		(    SELECT
+		        a.*,ROWNUM AS RN
+		    FROM
+		        (
+		        SELECT
+		            a.*
+		        FROM
+		            (
+		                SELECT
+		   		    *
+		   		FROM
+		   		    (
+		   		        SELECT
+		   		            a.*
+		   		        FROM
+		   		            (
+		   		                SELECT
+		   		                    RANK()
+		   		                    OVER(PARTITION BY id
+		   		                         ORDER BY store_id DESC
+		   		                    )    rank,
+		   		                    id,
+		   		                    type,
+		   		                    regist_num,
+		   		                    name,
+		   		                    represent_name,
+		   		                    start_date,
+		   		                    end_date,
+		   		                    busi_type,
+		   		                    store_name,
+		   		                    pcc_name,
+		   		                    num,
+		   		                    CASE
+		   		                        WHEN store_mod_code IS NOT NULL THEN
+		   		                            store_mod_code
+		   		                        ELSE
+		   		                            '0'
+		   		                    END  mod_code
+		   		                FROM
+		   		                    (
+		   		                        SELECT
+		   		                            a.company_id                                                             AS id,
+		   		                            CASE
+		   		                                WHEN b.receipt_deduction_etc_yn != 'Y'
+		   		                                     AND ( receipt_book_yn = 'Y'
+		   		                                           OR receipt_concert_yn = 'Y'
+		   		                                           OR receipt_museum_yn = 'Y'
+		   		                                           OR receipt_gallery_yn = 'Y'
+		   		                                           OR receipt_newspaper_yn = 'Y' ) THEN
+		   		                                    '1'
+		   		                                ELSE
+		   		                                    '2'
+		   		                            END                                                                      AS type,
+		   		                            regexp_replace(company_regist_num, '(.{3})(.+)(.{5})', '\1-\2-\3')       AS regist_num,
+		   		                            nvl(a.company_name, '')                                                  AS name,
+		   		                            nvl(a.represent_name, '')                                                AS represent_name,
+		   		                            <![CDATA[
+		   		                            nvl(fn_date_check(
+		   		                                CASE
+		   		                                    WHEN a.company_id IN(23041, 15643) THEN
+		   		                                        nvl(c.start_date, a.start_ymd)
+		   		                                    WHEN a.company_id = 31125 THEN
+		   		                                        '20210101'
+		   		                                    WHEN(b.receipt_newspaper_yn = 'Y'
+		   		                                         AND b.receipt_deduction_etc_yn = 'Y')
+		   		                                        AND nvl(c.start_date, a.start_ymd) > '20201231' THEN
+		   		                                        nvl(c.start_date, a.start_ymd)
+		   		                                    WHEN(b.receipt_newspaper_yn = 'Y'
+		   		                                         AND b.receipt_deduction_etc_yn = 'Y') THEN
+		   		                                        '20210101'
+		   		                                    WHEN b.receipt_deduction_etc_yn != 'Y'
+		   		                                         AND(b.receipt_book_yn = 'Y'
+		   		                                             OR b.receipt_concert_yn = 'Y'
+		   		                                             OR b.receipt_museum_yn = 'Y'
+		   		                                             OR b.receipt_gallery_yn = 'Y'
+		   		                                             OR b.receipt_newspaper_yn = 'Y') THEN
+		   		                                            CASE
+		   		                                                WHEN(b.receipt_newspaper_yn = 'Y') THEN
+		   		                                                    '20210101'
+		   		                                                WHEN a.force_start_ymd IS NOT NULL THEN
+		   		                                                    a.force_start_ymd
+		   		                                                WHEN(b.receipt_book_yn = 'Y'
+		   		                                                     AND b.receipt_museum_yn = 'Y')
+		   		                                                    AND nvl(c.start_date, a.start_ymd) <= '20181231' THEN
+		   		                                                    '20180701'
+		   		                                                WHEN(b.receipt_book_yn = 'Y'
+		   		                                                     OR b.receipt_concert_yn = 'Y')
+		   		                                                    AND nvl(c.start_date, a.start_ymd) <= '20181231' THEN
+		   		                                                    '20180701'
+		   		                                                WHEN a.company_regist_num = 5139831194
+		   		                                                     OR a.company_regist_num = 2149042920
+		   		                                                     OR a.company_regist_num = 3149290600
+		   		                                                     OR a.company_regist_num = 4179147666 THEN
+		   		                                                    '20180701'
+		   		                                                WHEN(b.receipt_book_yn = 'Y'
+		   		                                                     AND b.receipt_museum_yn = 'Y')
+		   		                                                    AND nvl(c.start_date, a.start_ymd) <= '20191231' THEN
+		   		                                                    '20190701'
+		   		                                                WHEN(b.receipt_book_yn = 'Y'
+		   		                                                     OR b.receipt_concert_yn = 'Y')
+		   		                                                    AND nvl(c.start_date, a.start_ymd) <= '20191231' THEN
+		   		                                                    '20190101'
+		   		                                                WHEN(b.receipt_museum_yn = 'Y'
+		   		                                                     OR b.receipt_gallery_yn = 'Y')
+		   		                                                    AND nvl(c.start_date, a.start_ymd) <= '20191231' THEN
+		   		                                                    '20190701'
+		   		                                                WHEN nvl(c.start_date, a.start_ymd) >= '20200101' THEN
+		   		                                                    substr(nvl(c.start_date, a.start_ymd), 0, 4)
+		   		                                                    || '0101'
+		   		                                                ELSE
+		   		                                                    nvl(c.start_date, a.start_ymd)
+		   		                                            END
+		   		                                    WHEN b.receipt_deduction_etc_yn = 'Y'
+		   		                                         AND(b.receipt_book_yn = 'Y'
+		   		                                             OR b.receipt_concert_yn = 'Y'
+		   		                                             OR b.receipt_museum_yn = 'Y'
+		   		                                             OR b.receipt_gallery_yn = 'Y') THEN
+		   		                                            CASE
+		   		                                                WHEN((b.receipt_museum_yn = 'Y'
+		   		                                                      OR b.receipt_gallery_yn = 'Y')
+		   		                                                     AND b.receipt_book_yn = 'N'
+		   		                                                     AND b.receipt_concert_yn = 'N')
+		   		                                                    AND nvl(c.start_date, a.start_ymd) <= '20190701' THEN
+		   		                                                    '20190701'
+		   		                                                WHEN b.receipt_newspaper_yn = 'Y' THEN
+		   		                                                    '20210101'
+		   		                                                ELSE
+		   		                                                    nvl(c.start_date, a.start_ymd)
+		   		                                            END
+		   		                                    ELSE
+		   		                                        nvl(c.start_date, a.start_ymd)
+		   		                                END
+		   		                            ),
+		   		                                '')                                                                  AS start_date,
+		   		                            CASE
+		   		                                WHEN c.end_date IS NULL
+		   		                                     OR c.end_date = '' THEN
+		   		                                        CASE
+		   		                                            WHEN a.use_yn = 'N' THEN
+		   		                                                nvl(fn_date_check(a.end_ymd), '')
+		   		                                            ELSE
+		   		                                                nvl(fn_date_check(a.end_ymd), '99999999')
+		   		                                        END
+		   		                                ELSE
+		   		                                    nvl(fn_date_check(c.end_date), '')
+		   		                            END                                                                      AS end_date,
+		   		                            CASE
+		   		                                WHEN a.company_type = 'ENTER'    THEN
+		   		                                    '4'
+		   		                                WHEN a.company_type = 'PG'       THEN
+		   		                                    '5'
+		   		                                WHEN a.company_type = 'SALE'     THEN
+		   		                                        CASE
+		   		                                            WHEN offline_yn = 'Y'
+		   		                                                 AND ( online_sale_yn = 'Y'
+		   		                                                       OR online_commission_yn = 'Y' )
+		   		                                                 AND online_enter_yn != 'Y' THEN
+		   		                                                '3'
+		   		                                            WHEN offline_yn = 'Y'
+		   		                                                 AND ( online_sale_yn = 'Y'
+		   		                                                       OR online_commission_yn = 'Y' )
+		   		                                                 AND online_enter_yn = 'Y' THEN
+		   		                                                '3, 4'
+		   		                                            WHEN offline_yn = 'Y'
+		   		                                                 AND ( online_sale_yn != 'Y'
+		   		                                                       AND online_commission_yn != 'Y'
+		   		                                                       AND online_enter_yn != 'Y' ) THEN
+		   		                                                '1'
+		   		                                            WHEN offline_yn = 'Y'
+		   		                                                 AND ( online_sale_yn != 'Y'
+		   		                                                       AND online_commission_yn != 'Y' )
+		   		                                                 AND online_enter_yn = 'Y' THEN
+		   		                                                '1, 4'
+		   		                                            WHEN offline_yn != 'Y'
+		   		                                                 AND ( online_sale_yn = 'Y'
+		   		                                                       OR online_commission_yn = 'Y' )
+		   		                                                 AND online_enter_yn != 'Y' THEN
+		   		                                                '2'
+		   		                                            WHEN offline_yn != 'Y'
+		   		                                                 AND ( online_sale_yn = 'Y'
+		   		                                                       OR online_commission_yn = 'Y' )
+		   		                                                 AND online_enter_yn = 'Y' THEN
+		   		                                                '2, 4'
+		   		                                            ELSE
+		   		                                                ''
+		   		                                        END
+		   		                                ELSE
+		   		                                    ''
+		   		                            END                                                                      AS busi_type,
+		   		                            nvl(
+		   		                                CASE
+		   		                                    WHEN c.type = 'SALE_REPRESENT_PG'
+		   		                                         OR c.type = 'SALE_INDIVIDUAL_PG'
+		   		                                         OR c.type = 'SALE_OFFLINE_PG' THEN
+		   		                                        pcc_name
+		   		                                    WHEN c.type = 'PG_CARD' THEN
+		   		                                        b.pg_store_name
+		   		                                    ELSE
+		   		                                        b.offline_store_name
+		   		                                END,
+		   		                                a.company_name)                                                      AS store_name,
+		   		                            CASE
+		   		                                WHEN c.type = 'SALE_REPRESENT_PG'
+		   		                                     OR c.type = 'SALE_INDIVIDUAL_PG'
+		   		                                     OR c.type = 'ENTER_CASH' THEN
+		   		                                    ''
+		   		                                ELSE
+		   		                                    pcc_name
+		   		                            END                                                                      AS pcc_name,
+		   		                            num,
+		   		                            c.store_id,
+		   		                            csm.mod_code                                                                       AS store_mod_code
+		   		                        FROM
+		   		                            company      a,
+		   		                            company_sub  b,
+		   		                            company_store_mod csm,
+		   		                            store_list   c
+		   		                        WHERE
+		   		                                a.state = 'COMPLETE'
+		   		                            AND a.company_id = b.company_id
+		   		                            AND a.company_id = c.company_id (+)
+		   		                            AND csm.store_id = c.store_id
+		   		                            AND to_char(csm.mod_code_date, 'yyyymmdd') = to_char(sysdate, 'yyyymmdd')
+		   		                    )
+		   		            ) a
+		   		        ORDER BY
+		   		            id DESC,
+		   		            rank,
+		   		            store_name
+		   		    )
+		    ) a
+		    WHERE ROWNUM <= (#{_page}+1)*#{_pagesize}
+		)
+		WHERE RN > (#{_page}*#{_pagesize})
+	  ]]>
+   	</select>
+
+   	<select id="batchNTSExcelListForCash" resultMap="companyChangeGubun">
+	<![CDATA[
+		SELECT *
+		FROM
+		(    SELECT
+		        a.*,ROWNUM AS RN
+		    FROM
+		        (
+		        SELECT
+		            a.*
+		        FROM
+		            (
+		                SELECT
+		                    RANK()
+		                    OVER(PARTITION BY company_id
+		                         ORDER BY change_seq ASC
+		                    )    rank,
+		                    company_id,
+		                    type,
+		                    regist_num,
+		                    start_date,
+		                    end_date,
+		                    bf_start_date,
+		                    bf_end_date,
+		                    CASE
+		                        WHEN compay_mod_code IS NOT NULL THEN
+		                            compay_mod_code
+		                        ELSE
+		                            ''
+		                    END  mod_code,
+		                    change_seq,
+		                    CHANGE_GUBUN_DATE
+		                FROM
+		                    (
+		                        SELECT
+		                            a.company_id,
+		                            CASE
+		                                WHEN cg.change_gubun IS NOT NULL THEN
+		                                    cg.change_gubun
+		                                ELSE
+		                                    CASE
+		                                        WHEN b.receipt_deduction_etc_yn != 'Y'
+		                                             AND ( receipt_book_yn = 'Y'
+		                                                   OR receipt_concert_yn = 'Y'
+		                                                   OR receipt_museum_yn = 'Y'
+		                                                   OR receipt_gallery_yn = 'Y'
+		                                                   OR receipt_newspaper_yn = 'Y' ) THEN
+		                                                '1'
+		                                        ELSE
+		                                            '2'
+		                                    END
+		                            END                                                                      AS type,
+		                            regexp_replace(company_regist_num, '(.{3})(.+)(.{5})', '\1-\2-\3')       AS regist_num,
+		                            nvl(fn_date_check(
+		                                CASE
+		                                    WHEN cg.af_start_ymd IS NOT NULL THEN
+		                                        cg.af_start_ymd
+		                                    ELSE
+		                                        CASE
+		                                                WHEN a.company_id IN(23041, 15643) THEN
+		                                                    a.start_ymd
+		                                                WHEN a.company_id = 31125                THEN
+		                                                    '20210101'
+		                                                WHEN(b.receipt_newspaper_yn = 'Y'
+		                                                     AND b.receipt_deduction_etc_yn = 'Y')
+		                                                    AND a.start_ymd <= '20201231' THEN
+		                                                    '20210101'
+		                                                WHEN(b.receipt_newspaper_yn = 'Y'
+		                                                     AND b.receipt_deduction_etc_yn = 'Y')
+		                                                    AND a.start_ymd > '20201231' THEN
+		                                                    a.start_ymd
+		                                                WHEN(b.receipt_newspaper_yn = 'Y'
+		                                                     AND b.receipt_deduction_etc_yn = 'Y') THEN
+		                                                    '20210101'
+		                                                WHEN b.receipt_deduction_etc_yn != 'Y'
+		                                                     AND(b.receipt_book_yn = 'Y'
+		                                                         OR b.receipt_concert_yn = 'Y'
+		                                                         OR b.receipt_museum_yn = 'Y'
+		                                                         OR b.receipt_gallery_yn = 'Y'
+		                                                         OR b.receipt_newspaper_yn = 'Y') THEN
+		                                                        CASE
+		                                                            WHEN(b.receipt_newspaper_yn = 'Y') THEN
+		                                                                '20210101'
+		                                                            WHEN a.force_start_ymd IS NOT NULL THEN
+		                                                                a.force_start_ymd
+		                                                            WHEN(b.receipt_book_yn = 'Y'
+		                                                                 AND b.receipt_museum_yn = 'Y')
+		                                                                AND a.start_ymd <= '20181231' THEN
+		                                                                '20180701'
+		                                                            WHEN(b.receipt_book_yn = 'Y'
+		                                                                 OR b.receipt_concert_yn = 'Y')
+		                                                                AND a.start_ymd <= '20181231' THEN
+		                                                                '20180701'
+		                                                            WHEN a.company_regist_num = 5139831194
+		                                                                 OR a.company_regist_num = 2149042920
+		                                                                 OR a.company_regist_num = 3149290600
+		                                                                 OR a.company_regist_num = 4179147666 THEN
+		                                                                '20180701'
+		                                                            WHEN a.company_id = 24982          THEN
+		                                                                '20190701'
+		                                                            WHEN a.start_ymd <= '20181231'     THEN
+		                                                                '20180701'
+		                                                            WHEN(b.receipt_book_yn = 'Y'
+		                                                                 AND b.receipt_museum_yn = 'Y')
+		                                                                AND a.start_ymd <= '20191231' THEN
+		                                                                '20190701'
+		                                                            WHEN(b.receipt_book_yn = 'Y'
+		                                                                 OR b.receipt_concert_yn = 'Y')
+		                                                                AND a.start_ymd <= '20191231' THEN
+		                                                                '20190101'
+		                                                            WHEN(b.receipt_museum_yn = 'Y'
+		                                                                 OR b.receipt_gallery_yn = 'Y')
+		                                                                AND a.start_ymd <= '20191231' THEN
+		                                                                '20190701'
+		                                                            WHEN a.start_ymd >= '20200101'     THEN
+		                                                                substr(a.start_ymd, 0, 4)
+		                                                                || '0101'
+		                                                            ELSE
+		                                                                a.start_ymd
+		                                                        END
+		                                                WHEN b.receipt_deduction_etc_yn = 'Y'    THEN
+		                                                        CASE
+		                                                            WHEN company_regist_num IN(1278536154, 1358528034, 6128507180,
+		                                                                                       6218518279,
+		                                                                                       4108519038,
+		                                                                                       1358531446,
+		                                                                                       1138516348,
+		                                                                                       3128526370,
+		                                                                                       6098523559,
+		                                                                                       5138515710,
+		                                                                                       2108516732,
+		                                                                                       6158510307,
+		                                                                                       1248542472,
+		                                                                                       4118508626,
+		                                                                                       1238528517,
+		                                                                                       6088517637,
+		                                                                                       1248535568,
+		                                                                                       3168500620,
+		                                                                                       3038511271,
+		                                                                                       3118509529,
+		                                                                                       1428524623,
+		                                                                                       3148534027,
+		                                                                                       6078529843,
+		                                                                                       6158531317,
+		                                                                                       4048506839,
+		                                                                                       1248582469,
+		                                                                                       1228540070,
+		                                                                                       1258525516,
+		                                                                                       3148531165,
+		                                                                                       1228526175,
+		                                                                                       6068521004,
+		                                                                                       4108534397,
+		                                                                                       4078503976,
+		                                                                                       4018511314,
+		                                                                                       6208509952,
+		                                                                                       1268554241,
+		                                                                                       4108527649,
+		                                                                                       1378542158,
+		                                                                                       1348554015,
+		                                                                                       4178509642,
+		                                                                                       1448503416,
+		                                                                                       1278540298,
+		                                                                                       1288552443,
+		                                                                                       1348551551,
+		                                                                                       6038512980,
+		                                                                                       2068532524,
+		                                                                                       1258532389,
+		                                                                                       1348533024,
+		                                                                                       5068518403,
+		                                                                                       4108515139,
+		                                                                                       1358550536,
+		                                                                                       5108509505,
+		                                                                                       3128518486,
+		                                                                                       6028521467,
+		                                                                                       4028525903,
+		                                                                                       6098529266,
+		                                                                                       1378532096,
+		                                                                                       2308502402,
+		                                                                                       1278548102,
+		                                                                                       4178509429,
+		                                                                                       1218526551,
+		                                                                                       3018541046,
+		                                                                                       2158536669,
+		                                                                                       3128561611,
+		                                                                                       4188509359,
+		                                                                                       2218513583,
+		                                                                                       6218538159,
+		                                                                                       1318551625,
+		                                                                                       1228549862,
+		                                                                                       4128507765,
+		                                                                                       6168520190,
+		                                                                                       2158513569,
+		                                                                                       1318517286,
+		                                                                                       7908501055,
+		                                                                                       1228518205,
+		                                                                                       4188510614,
+		                                                                                       6128517640,
+		                                                                                       1288518921,
+		                                                                                       2248523095,
+		                                                                                       3158506577,
+		                                                                                       6088528833,
+		                                                                                       8138500761,
+		                                                                                       1298518040,
+		                                                                                       6218527860,
+		                                                                                       2198506129,
+		                                                                                       1028529300,
+		                                                                                       3178507363,
+		                                                                                       2078512026,
+		                                                                                       6108516704,
+		                                                                                       1208550460,
+		                                                                                       1408513042,
+		                                                                                       1328525455,
+		                                                                                       6598500298,
+		                                                                                       3828500160,
+		                                                                                       3108511231,
+		                                                                                       2108524440,
+		                                                                                       2558500024,
+		                                                                                       1288522783,
+		                                                                                       6128516490,
+		                                                                                       6068512413,
+		                                                                                       6098535827,
+		                                                                                       3048508731,
+		                                                                                       2048521356,
+		                                                                                       2218514210,
+		                                                                                       1328508664,
+		                                                                                       5648500495,
+		                                                                                       1248567342,
+		                                                                                       3148516048,
+		                                                                                       1408513038,
+		                                                                                       8548500573,
+		                                                                                       1948500452,
+		                                                                                       4038508815,
+		                                                                                       1098537306,
+		                                                                                       6378500342,
+		                                                                                       4718500397,
+		                                                                                       3128549636,
+		                                                                                       1278526976,
+		                                                                                       1328526323,
+		                                                                                       5028532102,
+		                                                                                       1248584583,
+		                                                                                       2108515859,
+		                                                                                       5028538858,
+		                                                                                       3128560650,
+		                                                                                       1288568436,
+		                                                                                       2178522521,
+		                                                                                       1388528654,
+		                                                                                       1288567422,
+		                                                                                       4108548246,
+		                                                                                       2158542365,
+		                                                                                       1388524473,
+		                                                                                       8748501009,
+		                                                                                       5588500563,
+		                                                                                       7638500582,
+		                                                                                       1198509184,
+		                                                                                       6058538180,
+		                                                                                       2768500036,
+		                                                                                       1078521303,
+		                                                                                       6658500390) THEN
+		                                                                '20180701'
+		                                                            WHEN a.state = 'COMPLETE' THEN
+		                                                                a.start_ymd
+		                                                            ELSE
+		                                                                ''
+		                                                        END
+		                                                WHEN b.receipt_newspaper_yn = 'Y'        THEN
+		                                                    '20210101'
+		                                                ELSE
+		                                                    a.start_ymd
+		                                        END
+		                                END
+		                            ),
+		                                '')                                                                  AS start_date,
+		                            CASE
+		                                WHEN cg.af_end_ymd IS NOT NULL THEN
+		                                    nvl(fn_date_check(cg.af_end_ymd), '')
+		                                ELSE
+		                                    nvl(fn_date_check(a.end_ymd), '99999999')
+		                            END                                                                      AS end_date,
+		                            CASE
+		                                WHEN cg.bf_start_ymd IS NOT NULL THEN
+		                                    nvl(fn_date_check(cg.bf_start_ymd), '')
+		                                ELSE
+		                                    ''
+		                            END                                                                      AS bf_start_date,
+		                            CASE
+		                                WHEN cg.bf_end_ymd IS NOT NULL THEN
+		                                    nvl(fn_date_check(cg.bf_end_ymd), '')
+		                                ELSE
+		                                    ''
+		                            END                                                                      AS bf_end_date,
+		                            cg.mod_code                                                              AS compay_mod_code,
+		                            CASE
+		                                WHEN cg.change_gubun_seq IS NOT NULL THEN
+		                                    cg.change_gubun_seq
+		                                ELSE
+		                                    0
+		                            END                                                                      AS change_seq,
+		                            cg.CHANGE_GUBUN_DATE
+		                        FROM
+		                            company               a,
+		                            company_sub           b,
+		                            company_change_gubun  cg
+		                        WHERE
+		                                a.state = 'COMPLETE'
+		                            AND a.company_id = b.company_id
+		                            AND a.company_id = cg.company_id (+)
+		                            AND to_char(cg.change_gubun_date, 'yyyymmddHH24') BETWEEN to_char(sysdate-1, 'yyyymmdd') || '18' and to_char(sysdate, 'yyyymmdd') || '18'
+		        --                    AND cg.change_gubun_date >= sysdate-2
+		        --                    AND cg.change_gubun_date <= sysdate
+		                    )
+		            ) a
+		        ORDER BY
+		            company_id DESC,
+		            rank,
+		            change_seq
+		    ) a
+		    WHERE ROWNUM <= (#{_page}+1)*#{_pagesize}
+		)
+		WHERE RN > (#{_page}*#{_pagesize})
+	]]>
+   	</select>
+
+</mapper>
